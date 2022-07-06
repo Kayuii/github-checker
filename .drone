@@ -1,0 +1,264 @@
+---
+kind: pipeline
+name: testing
+
+platform:
+  os: linux
+  arch: amd64
+
+steps:
+- name: vet
+  image: golang:1.18.3
+  commands:
+  - go vet ./...
+  environment:
+    GO111MODULE: on
+  volumes:
+  - name: gopath
+    path: /go
+
+- name: test
+  image: golang:1.18.3
+  commands:
+  - go test -cover ./...
+  environment:
+    GO111MODULE: on
+  volumes:
+  - name: gopath
+    path: /go
+
+volumes:
+- name: gopath
+  temp: {}
+
+trigger:
+  ref:
+  - refs/heads/master
+  - "refs/tags/**"
+  - "refs/pull/**"
+
+---
+kind: pipeline
+name: linux-amd64-docker
+
+platform:
+  os: linux
+  arch: amd64
+
+steps:
+- name: build-push
+  image: golang:1.18.3
+  commands:
+  - "go build -v -ldflags \"-X main.version=${DRONE_COMMIT_SHA:0:8}\" -a -tags netgo -o release/linux/amd64/github-checker ./cmd/github-checker"
+  environment:
+    CGO_ENABLED: 0
+    GO111MODULE: on
+  when:
+    event:
+      exclude:
+      - tag
+
+- name: build-tag
+  image: golang:1.18.3
+  commands:
+  - "go build -v -ldflags \"-X main.version=${DRONE_TAG##v}\" -a -tags netgo -o release/linux/amd64/github-checker ./cmd/github-checker"
+  environment:
+    CGO_ENABLED: 0
+    GO111MODULE: on
+  when:
+    event:
+    - tag
+
+- name: executable
+  image: golang:1.18.3
+  commands:
+  - ./release/linux/amd64/github-checker --help
+
+- name: publish
+  image: plugins/docker:18
+  settings:
+    auto_tag: true
+    auto_tag_suffix: linux-amd64
+    daemon_off: false
+    dockerfile: docker/Dockerfile.linux.amd64
+    password:
+      from_secret: docker_password
+    repo: kayuii/github-checker
+    username:
+      from_secret: docker_username
+  when:
+    event:
+      exclude:
+      - pull_request
+
+trigger:
+  ref:
+  - refs/heads/master
+  - "refs/tags/**"
+  - "refs/pull/**"
+
+depends_on:
+- testing
+
+---
+kind: pipeline
+name: linux-arm64-docker
+
+platform:
+  os: linux
+  arch: arm64
+
+steps:
+- name: build-push
+  image: golang:1.18.3
+  commands:
+  - "go build -v -ldflags \"-X main.version=${DRONE_COMMIT_SHA:0:8}\" -a -tags netgo -o release/linux/arm64/github-checker ./cmd/github-checker"
+  environment:
+    CGO_ENABLED: 0
+    GO111MODULE: on
+  when:
+    event:
+      exclude:
+      - tag
+
+- name: build-tag
+  image: golang:1.18.3
+  commands:
+  - "go build -v -ldflags \"-X main.version=${DRONE_TAG##v}\" -a -tags netgo -o release/linux/arm64/github-checker ./cmd/github-checker"
+  environment:
+    CGO_ENABLED: 0
+    GO111MODULE: on
+  when:
+    event:
+    - tag
+
+- name: executable
+  image: golang:1.18.3
+  commands:
+  - ./release/linux/arm64/github-checker --help
+
+- name: publish
+  image: plugins/docker:18
+  settings:
+    auto_tag: true
+    auto_tag_suffix: linux-arm64
+    daemon_off: false
+    dockerfile: docker/Dockerfile.linux.arm64
+    password:
+      from_secret: docker_password
+    repo: kayuii/github-checker
+    username:
+      from_secret: docker_username
+  when:
+    event:
+      exclude:
+      - pull_request
+
+trigger:
+  ref:
+  - refs/heads/master
+  - "refs/tags/**"
+  - "refs/pull/**"
+
+depends_on:
+- testing
+
+---
+kind: pipeline
+name: linux-arm-docker
+
+platform:
+  os: linux
+  arch: arm
+
+steps:
+- name: build-push
+  image: golang:1.18.3
+  commands:
+  - "go build -v -ldflags \"-X main.version=${DRONE_COMMIT_SHA:0:8}\" -a -tags netgo -o release/linux/arm/github-checker ./cmd/github-checker"
+  environment:
+    CGO_ENABLED: 0
+    GO111MODULE: on
+  when:
+    event:
+      exclude:
+      - tag
+
+- name: build-tag
+  image: golang:1.18.3
+  commands:
+  - "go build -v -ldflags \"-X main.version=${DRONE_TAG##v}\" -a -tags netgo -o release/linux/arm/github-checker ./cmd/github-checker"
+  environment:
+    CGO_ENABLED: 0
+    GO111MODULE: on
+  when:
+    event:
+    - tag
+
+- name: executable
+  image: golang:1.18.3
+  commands:
+  - ./release/linux/arm/github-checker --help
+
+- name: publish
+  image: plugins/docker:18
+  settings:
+    auto_tag: true
+    auto_tag_suffix: linux-arm
+    daemon_off: false
+    dockerfile: docker/Dockerfile.linux.arm
+    password:
+      from_secret: docker_password
+    repo: kayuii/github-checker
+    username:
+      from_secret: docker_username
+  when:
+    event:
+      exclude:
+      - pull_request
+
+trigger:
+  ref:
+  - refs/heads/master
+  - "refs/tags/**"
+  - "refs/pull/**"
+
+depends_on:
+- testing
+
+---
+kind: pipeline
+name: notifications-docker
+
+platform:
+  os: linux
+  arch: amd64
+
+steps:
+- name: manifest
+  image: plugins/manifest
+  settings:
+    auto_tag: true
+    ignore_missing: true
+    password:
+      from_secret: docker_password
+    spec: docker/manifest.tmpl
+    username:
+      from_secret: docker_username
+
+trigger:
+  ref:
+  - refs/heads/master
+  - "refs/tags/**"
+
+depends_on:
+# - windows-1809-docker
+# - windows-1909-docker
+- linux-amd64-docker
+- linux-arm64-docker
+- linux-arm-docker
+
+
+
+
+...
