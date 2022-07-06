@@ -18,7 +18,7 @@ func settingsFlags(settings *plugin.Settings) []cli.Flag {
 			Name:        "github-url",
 			Usage:       "github url, defaults to current scm",
 			Aliases:     []string{"u"},
-			EnvVars:     []string{"PLUGIN_GITHUB_URL", "DRONE_REPO_LINK"},
+			EnvVars:     []string{"PLUGIN_GITHUB_URL", "GITHUB_REPO_LINK"},
 			Destination: &settings.GitHubURL,
 		},
 		&cli.BoolFlag{
