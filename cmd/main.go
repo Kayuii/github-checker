@@ -6,8 +6,10 @@
 package main
 
 import (
-	"github-checker/plugin"
 	"os"
+
+	"github.com/kayuii/github-checker/plugin"
+	"github.com/kayuii/github-checker/utils"
 
 	"github.com/drone-plugins/drone-plugin-lib/errors"
 	"github.com/drone-plugins/drone-plugin-lib/urfave"
@@ -42,6 +44,16 @@ func main() {
 func run(settings *plugin.Settings) cli.ActionFunc {
 	return func(ctx *cli.Context) error {
 		urfave.LoggingFromContext(ctx)
+
+		if ctx.NArg() == 0 {
+			return nil
+		}
+		if settings.GitHubURL == "" && ctx.NArg() > 0 {
+			settings.GitHubURL = ctx.Args().First()
+		}
+		if pipeline, flag := utils.GetPipe(); flag {
+			settings.Pipe = pipeline
+		}
 
 		plugin := plugin.New(
 			*settings,

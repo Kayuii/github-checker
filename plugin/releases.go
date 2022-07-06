@@ -7,7 +7,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"net/url"
 	"sort"
 	"strings"
 	"time"
@@ -59,8 +58,8 @@ func (r Releases) Swap(i, j int) {
 	r[i], r[j] = r[j], r[i]
 }
 
-func fetchReleases(url url.URL) ([]Release, error) {
-	resp, err := http.Get(url.String())
+func fetchReleases(url string) ([]Release, error) {
+	resp, err := http.Get(url)
 	if err != nil {
 		return nil, fmt.Errorf("Failed to fetch from %s: %s", url, err)
 	}
@@ -92,7 +91,7 @@ func filterStableReleases(rs []Release) []Release {
 
 // FetchAllReleases will return all releases. The latest release will be at
 // position 0.
-func FetchAllReleases(url url.URL) ([]Release, error) {
+func FetchAllReleases(url string) ([]Release, error) {
 	rs, err := fetchReleases(url)
 	if err != nil {
 		return nil, err
@@ -105,7 +104,7 @@ func FetchAllReleases(url url.URL) ([]Release, error) {
 
 // FetchLatestRelease will simply return the latested release, possibly a pre
 // release.
-func FetchLatestRelease(url url.URL) (Release, error) {
+func FetchLatestRelease(url string) (Release, error) {
 	rs, err := FetchAllReleases(url)
 	if err != nil {
 		return Release{}, err
@@ -115,7 +114,7 @@ func FetchLatestRelease(url url.URL) (Release, error) {
 
 // FetchAllStableReleases will return all stable releases. The latest release
 // will be at position 0.
-func FetchAllStableReleases(url url.URL) ([]Release, error) {
+func FetchAllStableReleases(url string) ([]Release, error) {
 	rs, err := fetchReleases(url)
 	if err != nil {
 		return []Release{}, err
@@ -129,7 +128,7 @@ func FetchAllStableReleases(url url.URL) ([]Release, error) {
 // FetchLatestStableRelease will return the latest stable release. This will
 // exclude any releases marked as draft, prerelease or containing a pre-release
 // marker in the name
-func FetchLatestStableRelease(url url.URL) (Release, error) {
+func FetchLatestStableRelease(url string) (Release, error) {
 	rs, err := FetchAllStableReleases(url)
 	if err != nil {
 		return Release{}, err

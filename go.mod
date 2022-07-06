@@ -1,4 +1,4 @@
-module github-checker
+module github.com/kayuii/github-checker
 
 go 1.18
 

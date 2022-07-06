@@ -6,7 +6,7 @@
 package main
 
 import (
-	"github-checker/plugin"
+	"github.com/kayuii/github-checker/plugin"
 
 	"github.com/urfave/cli/v2"
 )
@@ -29,9 +29,9 @@ func settingsFlags(settings *plugin.Settings) []cli.Flag {
 			Destination: &settings.PreRelease,
 		},
 		&cli.StringFlag{
-			Name:        "version",
+			Name:        "check-version",
 			Usage:       "compare version number",
-			Aliases:     []string{"v"},
+			Aliases:     []string{"c"},
 			EnvVars:     []string{"PLUGIN_VERSION", "GITHUB_RELEASE_VERSION"},
 			Destination: &settings.Version,
 		},

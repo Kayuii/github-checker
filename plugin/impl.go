@@ -12,12 +12,13 @@ import (
 	"github.com/blang/semver"
 )
 
-var BaseURL = "https://api.github.com/repos/%s/%s/releases"
+var BaseURL = "https://api.github.com/repos/%s/releases"
 
 // Settings for the plugin.
 type Settings struct {
 	GitHubURL  string
 	Version    string
+	Pipe       string
 	PreRelease bool
 
 	baseURL *url.URL
@@ -27,10 +28,6 @@ type Settings struct {
 // Validate handles the settings validation of the plugin.
 func (p *Plugin) Validate() error {
 	var err error
-
-	if p.pipeline.Build.Event != "tag" {
-		return fmt.Errorf("github release plugin is only available for tags")
-	}
 
 	p.settings.baseURL, err = gitHubURLs(p.settings.GitHubURL)
 	if err != nil {
@@ -43,56 +40,46 @@ func (p *Plugin) Validate() error {
 		if err != nil {
 			return fmt.Errorf("failed to parse version: %w", err)
 		}
+	} else if len(p.settings.Pipe) > 0 {
+		p.settings.version = Version(p.settings.Pipe)
+		err := p.settings.version.Validate()
+		if err != nil {
+			return fmt.Errorf("failed to parse version from pipe: %w", err)
+		}
 	}
+
 	return nil
 }
 
 // Execute provides the implementation of the plugin.
 func (p *Plugin) Execute() error {
-
 	r := Release{}
 	var err error
-
 	if p.settings.PreRelease {
-		r, err = FetchLatestRelease(*p.settings.baseURL)
+		r, err = FetchLatestRelease((*p.settings.baseURL).String())
 	} else {
-		r, err = FetchLatestStableRelease(*p.settings.baseURL)
+		r, err = FetchLatestStableRelease((*p.settings.baseURL).String())
 	}
 	if err != nil {
 		return fmt.Errorf("failed to check the release: %w", err)
 	}
-
-	if len(p.settings.Version) < 1 {
+	if len(p.settings.Version) < 1 && len(p.settings.Pipe) < 1 {
 		fmt.Println(r.Name)
 		return nil
 	}
-
 	if r.Version().GT(p.settings.version) {
 		if len(r.Assets) > 0 {
 			for _, asset := range r.Assets {
-				fmt.Printf("URL: %s\n", asset.URL)
+				fmt.Printf("%s\n", asset.URL)
 			}
 		}
 	} else {
-		fmt.Printf("Not latest. Your Version %s - Latest: %s\n", p.settings.Version, r.Name)
+		fmt.Printf("Not latest. Your Version %s - Latest: %s\n", p.settings.version.String(), r.Name)
 	}
-
 	return nil
 }
 
 func gitHubURLs(gh string) (*url.URL, error) {
-	uri, err := url.Parse(gh)
-	if err != nil {
-		return nil, fmt.Errorf("could not parse GitHub link")
-	}
-
-	// Remove the path in the case that DRONE_REPO_LINK was passed in
-	uri.Path = ""
-
-	if uri.Hostname() != "github.com" {
-		relBaseURL, _ := url.Parse("./api/v3/")
-		return uri.ResolveReference(relBaseURL), nil
-	}
-	baseURL, _ := url.Parse("https://api.github.com/")
+	baseURL, _ := url.Parse(fmt.Sprintf(BaseURL, gh))
 	return baseURL, nil
 }
