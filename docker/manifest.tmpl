@@ -22,23 +22,3 @@ manifests:
       architecture: arm
       os: linux
       variant: v7
-  - image: kayuii/github-checker:{{#if build.tag}}{{trimPrefix "v" build.tag}}-{{/if}}windows-2004-amd64
-    platform:
-      architecture: amd64
-      os: windows
-      version: 2004
-  - image: kayuii/github-checker:{{#if build.tag}}{{trimPrefix "v" build.tag}}-{{/if}}windows-1909-amd64
-    platform:
-      architecture: amd64
-      os: windows
-      version: 1909
-  - image: kayuii/github-checker:{{#if build.tag}}{{trimPrefix "v" build.tag}}-{{/if}}windows-1903-amd64
-    platform:
-      architecture: amd64
-      os: windows
-      version: 1903
-  - image: kayuii/github-checker:{{#if build.tag}}{{trimPrefix "v" build.tag}}-{{/if}}windows-1809-amd64
-    platform:
-      architecture: amd64
-      os: windows
-      version: 1809
