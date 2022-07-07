@@ -45,9 +45,6 @@ func run(settings *plugin.Settings) cli.ActionFunc {
 	return func(ctx *cli.Context) error {
 		urfave.LoggingFromContext(ctx)
 
-		if ctx.NArg() == 0 {
-			return nil
-		}
 		if settings.GitHubURL == "" && ctx.NArg() > 0 {
 			settings.GitHubURL = ctx.Args().First()
 		}
