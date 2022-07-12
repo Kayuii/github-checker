@@ -37,6 +37,110 @@ trigger:
   - "refs/tags/**"
   - "refs/pull/**"
 
+
+---
+kind: pipeline
+name: linux-docker
+
+platform:
+  os: linux
+  arch: amd64
+
+steps:
+- name: build-push
+  image: golang:1.18.3
+  commands:
+  - "go build -v -ldflags \"-X main.version=${DRONE_COMMIT_SHA:0:8}\" -a -tags netgo -o release/linux/amd64/github-checker ./cmd/github-checker"
+  environment:
+    CGO_ENABLED: 0
+    GO111MODULE: on
+    GOOS: linux
+    GOARCH: amd64
+  when:
+    event:
+      exclude:
+      - tag
+
+- name: build-amd64-tag
+  image: golang:1.18.3
+  commands:
+  - "go build -v -ldflags \"-X main.version=${DRONE_TAG##v}\" -a -tags netgo -o release/linux/amd64/github-checker ./cmd/github-checker"
+  environment:
+    CGO_ENABLED: 0
+    GO111MODULE: on
+    GOOS: linux
+    GOARCH: amd64
+  when:
+    event:
+    - tag
+
+- name: build-arm64-tag
+  image: golang:1.18.3
+  commands:
+  - "go build -v -ldflags \"-X main.version=${DRONE_TAG##v}\" -a -tags netgo -o release/linux/arm64/github-checker ./cmd/github-checker"
+  environment:
+    CGO_ENABLED: 0
+    GO111MODULE: on
+    GOOS: linux
+    GOARCH: arm64
+  when:
+    event:
+    - tag
+
+- name: build-arm-tag
+  image: golang:1.18.3
+  commands:
+  - "go build -v -ldflags \"-X main.version=${DRONE_TAG##v}\" -a -tags netgo -o release/linux/armlh/github-checker ./cmd/github-checker"
+  environment:
+    CGO_ENABLED: 0
+    GO111MODULE: on
+    GOOS: linux
+    GOARCH: arm
+    GOARM: 7
+  when:
+    event:
+    - tag
+
+- name: executable
+  image: golang:1.18.3
+  commands:
+  - ./release/linux/amd64/github-checker --help
+
+- name: publish-amd64
+  image: thegeeklab/drone-docker-buildx
+  privileged: true
+  settings:
+    tags:
+    - test
+    platforms: "linux/amd64,linux/arm64,linux/arm"
+    dockerfile: docker/Dockerfile.linux
+    repo: kayuii/github-checker
+    username:
+      from_secret: docker_username
+    password:
+      from_secret: docker_password
+  when:
+    event:
+      exclude:
+      - pull_request
+
+# - name: publish
+#   image: plugins/docker:18
+#   settings:
+#     auto_tag: true
+#     auto_tag_suffix: linux-amd64
+#     daemon_off: false
+#     dockerfile: docker/Dockerfile.linux.amd64
+#     password:
+#       from_secret: docker_password
+#     repo: kayuii/github-checker
+#     username:
+#       from_secret: docker_username
+#   when:
+#     event:
+#       exclude:
+#       - pull_request
+
 ---
 kind: pipeline
 name: linux-amd64-docker

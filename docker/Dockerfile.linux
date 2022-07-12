@@ -1,0 +1,15 @@
+FROM ubuntu as base
+
+RUN export ARCH=$(dpkg --print-architecture) \
+  && echo "$ARCH"
+
+ADD release/linux/$ARCH/github-checker /bin/
+
+FROM alpine:3.18
+
+RUN apk add --no-cache git openssh curl perl bash \
+  && chsh -s /bin/bash
+
+COPY --from=base /bin/github-checker /bin/
+
+ENTRYPOINT [ "/bin/github-checker" ]
