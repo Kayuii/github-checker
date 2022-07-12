@@ -5,7 +5,7 @@ RUN export ARCH=$(dpkg --print-architecture) \
 
 ADD release/linux/$ARCH/github-checker /bin/
 
-FROM alpine:3.18
+FROM alpine:3.16
 
 RUN apk add --no-cache git openssh curl perl bash \
   && chsh -s /bin/bash
