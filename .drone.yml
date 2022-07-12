@@ -61,6 +61,36 @@ steps:
       exclude:
       - tag
 
+
+- name: build-arm64-tag
+  image: golang:1.18.3
+  commands:
+  - "go build -v -ldflags \"-X main.version=${DRONE_COMMIT_SHA:0:8}\" -a -tags netgo -o release/linux/arm64/github-checker ./cmd/github-checker"
+  environment:
+    CGO_ENABLED: 0
+    GO111MODULE: on
+    GOOS: linux
+    GOARCH: arm64
+  when:
+    event:
+      exclude:
+      - tag
+
+- name: build-arm-tag
+  image: golang:1.18.3
+  commands:
+  - "go build -v -ldflags \"-X main.version=${DRONE_COMMIT_SHA:0:8}\" -a -tags netgo -o release/linux/arm/github-checker ./cmd/github-checker"
+  environment:
+    CGO_ENABLED: 0
+    GO111MODULE: on
+    GOOS: linux
+    GOARCH: arm
+    GOARM: 7
+  when:
+    event:
+      exclude:
+      - tag
+
 - name: build-amd64-tag
   image: golang:1.18.3
   commands:
@@ -132,8 +162,6 @@ trigger:
 
 depends_on:
 - testing
-
-
 
 
 ...
