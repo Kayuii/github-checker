@@ -35,5 +35,13 @@ func settingsFlags(settings *plugin.Settings) []cli.Flag {
 			EnvVars:     []string{"PLUGIN_VERSION", "GITHUB_RELEASE_VERSION"},
 			Destination: &settings.Version,
 		},
+		&cli.IntFlag{
+			Name:        "mode",
+			Usage:       "Version number comparison mode. 0. auto 1. SemVer 2. StringComparison",
+			Aliases:     []string{"m"},
+			Value:       0,
+			EnvVars:     []string{"PLUGIN_MODE", "GITHUB_COMPARE_MODE"},
+			Destination: &settings.Mode,
+		},
 	}
 }

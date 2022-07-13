@@ -8,8 +8,9 @@ package plugin
 import (
 	"fmt"
 	"net/url"
+	"strings"
 
-	"github.com/blang/semver"
+	"github.com/blang/semver/v4"
 )
 
 var BaseURL = "https://api.github.com/repos/%s/releases"
@@ -20,6 +21,7 @@ type Settings struct {
 	Version    string
 	Pipe       string
 	PreRelease bool
+	Mode       int
 
 	baseURL *url.URL
 	version semver.Version
@@ -47,6 +49,9 @@ func (p *Plugin) Validate() error {
 			return fmt.Errorf("failed to parse version from pipe: %w", err)
 		}
 	}
+	if p.settings.Mode > 3 || p.settings.Mode < 0 {
+		p.settings.Mode = 0
+	}
 
 	return nil
 }
@@ -67,12 +72,15 @@ func (p *Plugin) Execute() error {
 		fmt.Println(r.Name)
 		return nil
 	}
-	if r.Version().GT(p.settings.version) {
-		if len(r.Assets) > 0 {
-			for _, asset := range r.Assets {
-				fmt.Printf("%s\n", asset.URL)
-			}
+
+	if r.Version().EQ(semver.Version{}) {
+		if strings.Compare(p.settings.Version, r.Name) != 0 {
+			r.Print()
+		} else {
+			fmt.Printf("Is latest. Your Version %s - Latest: %s\n", p.settings.Version, r.Name)
 		}
+	} else if r.Version().GT(p.settings.version) {
+		r.Print()
 	} else {
 		fmt.Printf("Not latest. Your Version %s - Latest: %s\n", p.settings.version.String(), r.Name)
 	}

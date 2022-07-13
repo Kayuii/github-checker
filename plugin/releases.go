@@ -11,7 +11,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/blang/semver"
+	"github.com/blang/semver/v4"
 )
 
 type Asset struct {
@@ -42,6 +42,14 @@ func (r Release) Version() semver.Version {
 		return sv
 	}
 	return semver.Version{}
+}
+
+func (r Release) Print() {
+	if len(r.Assets) > 0 {
+		for _, asset := range r.Assets {
+			fmt.Printf("%s\n", asset.URL)
+		}
+	}
 }
 
 type Releases []Release
