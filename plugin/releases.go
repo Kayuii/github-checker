@@ -44,6 +44,21 @@ func (r Release) Version() semver.Version {
 	return semver.Version{}
 }
 
+func (r Release) ReleaseToVersion() semver.Version {
+	ReleaseName := RemoveBrackets(r.Name)
+	match := sem.FindStringSubmatch(ReleaseName)
+	fmt.Printf("Name %s\n", r.Name)
+	fmt.Printf("match %v\n", match)
+	if len(match) < 2 {
+		return semver.Version{}
+	}
+	if sv, err := semver.ParseTolerant(match[1]); err == nil {
+		fmt.Printf("match %v\n", sv)
+		return sv
+	}
+	return semver.Version{}
+}
+
 func (r Release) Print() {
 	if len(r.Assets) > 0 {
 		for _, asset := range r.Assets {

@@ -73,13 +73,13 @@ func (p *Plugin) Execute() error {
 		return nil
 	}
 
-	if r.Version().EQ(semver.Version{}) {
+	if r.ReleaseToVersion().EQ(semver.Version{}) {
 		if strings.Compare(p.settings.Version, r.Name) != 0 {
 			r.Print()
 		} else {
 			fmt.Printf("Is latest. Your Version %s - Latest: %s\n", p.settings.Version, r.Name)
 		}
-	} else if r.Version().GT(p.settings.version) {
+	} else if r.ReleaseToVersion().GT(p.settings.version) {
 		r.Print()
 	} else {
 		fmt.Printf("Not latest. Your Version %s - Latest: %s\n", p.settings.version.String(), r.Name)

@@ -9,6 +9,8 @@ import (
 	"io/ioutil"
 	"os"
 	"regexp"
+	"strings"
+	"unicode/utf8"
 
 	"github.com/blang/semver/v4"
 )
@@ -34,7 +36,7 @@ func readStringOrFile(input string) (string, error) {
 }
 
 func Version(input string) semver.Version {
-	match := sem.FindStringSubmatch(input)
+	match := sem.FindStringSubmatch(RemoveBrackets(input))
 	if len(match) < 2 {
 		return semver.Version{}
 	}
@@ -42,4 +44,46 @@ func Version(input string) semver.Version {
 		return sv
 	}
 	return semver.Version{}
+}
+
+func RemoveBrackets(input string) string {
+	inputName := ReplaceToBytes(input, " ", "", -1)
+	inputName = ReplaceToBytes(string(inputName), "-", ".", -1)
+	inputName = ReplaceToBytes(string(inputName), "(", ".", -1)
+	inputName = ReplaceToBytes(string(inputName), ")", "", -1)
+	return string(inputName)
+}
+
+func ReplaceToBytes(s, old, new string, n int) []byte {
+	if old == new || n == 0 {
+		return []byte(s) // avoid allocation
+	}
+
+	// Compute number of replacements.
+	if m := strings.Count(s, old); m == 0 {
+		return []byte(s) // avoid allocation
+	} else if n < 0 || m < n {
+		n = m
+	}
+
+	// Apply replacements to buffer.
+	t := make([]byte, len(s)+n*(len(new)-len(old)))
+	w := 0
+	start := 0
+	for i := 0; i < n; i++ {
+		j := start
+		if len(old) == 0 {
+			if i > 0 {
+				_, wid := utf8.DecodeRuneInString(s[start:])
+				j += wid
+			}
+		} else {
+			j += strings.Index(s[start:], old)
+		}
+		w += copy(t[w:], s[start:j])
+		w += copy(t[w:], new)
+		start = j + len(old)
+	}
+	w += copy(t[w:], s[start:])
+	return t[0:w]
 }
